@@ -1,6 +1,7 @@
 import streamlit as st
 import preprocessor,helper
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 st.sidebar.title("Whatsapp Chat Analyzer")
 
@@ -55,26 +56,55 @@ if uploaded_file is not None:
     plt.xticks(rotation='vertical')
     st.pyplot(fig)
 
+    st.title("Daily Message")
+    timeline = helper.daily_message(selected_user, df)
+    fig, ax = plt.subplots()
+    ax.plot(timeline['time'], timeline['message'], color='green')
+    plt.xticks(rotation='vertical')
+    st.pyplot(fig)
 
 
+    st.title('Activity Map')
+    col1,col2 = st.columns(2)
+
+    with col1:
+        st.header("Most busy day")
+        busy_day = helper.week_activity_map(selected_user, df)
+        fig,ax = plt.subplots()
+        ax.bar(busy_day.index, busy_day.values)
+        st.pyplot(fig)
+
+    with col2:
+        st.header("Most busy month")
+        busy_month = helper.month_activity_map(selected_user, df)
+        fig, ax = plt.subplots()
+        ax.bar(busy_month.index, busy_month.values,color = 'red')
+        plt.xticks(rotation = 'vertical')
+        st.pyplot(fig)
+
+    st.title("weekly activity map")
+    user_heatmap = helper.activity_heatmap(selected_user, df)
+    fig, ax = plt.subplots()
+    axis = sns.heatmap(user_heatmap)
+    st.pyplot(fig)
 
     if selected_user == "Overall":
         st.header('Most Busy Users')
-        x,new_df= helper.most_busy_users(df)
+        x, new_df = helper.most_busy_users(df)
 
         # make a larger figure
-        fig, ax = plt.subplots(figsize=(10, 6))  # width=10, height=6 inches
+        fig, ax = plt.subplots(figsize=(10, 6))
         ax.bar(x.index, x.values, color='skyblue')
         plt.xticks(rotation=45, ha='right')
         ax.set_ylabel("Number of Messages")
         ax.set_xlabel("User")
         ax.set_title("Top 5 Most Active Users")
 
-        # show full-width chart
         st.pyplot(fig)
 
         with col2:
             st.dataframe(new_df)
+
 
     df_wc = helper.create_wordcloud(selected_user, df)
     fig,ax = plt.subplots()
