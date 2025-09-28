@@ -16,7 +16,7 @@ def preprocessor(data):
     messages = [item[1] for item in messages_and_dates]
 
     df = pd.DataFrame({'user_messages': messages, 'messages_date': dates})
-    df['messages_date'] = pd.to_datetime(df['messages_date'], format='%d/%m/%Y, %I:%M %p - ')
+    df['messages_date'] = pd.to_datetime(df['messages_date'], format='%d/%m/%Y, %I:%M %p - ', errors='coerce')
     df.rename(columns={'messages_date': 'date'}, inplace=True)
     df.head()
 
@@ -37,8 +37,9 @@ def preprocessor(data):
     if 'user_messages' in df.columns:
         df.drop(columns=['user_messages'], inplace=True)
     df.head()
-
+    df['only_date'] = df['date'].dt.date
     df['year'] = df['date'].dt.year
+    df['month_num'] = df['date'].dt.month
     df['month'] = df['date'].dt.month_name()
     df['day'] = df['date'].dt.day
     df['hour'] = df['date'].dt.hour

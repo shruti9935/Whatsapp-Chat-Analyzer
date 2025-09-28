@@ -1,6 +1,6 @@
 import streamlit as st
 import preprocessor,helper
-
+import matplotlib.pyplot as plt
 
 st.sidebar.title("Whatsapp Chat Analyzer")
 
@@ -10,8 +10,6 @@ if uploaded_file is not None:
     data = bytes_data.decode("utf-8")
     df = preprocessor.preprocessor(data)
 
-
-    st.dataframe(df)
 
     #fetch unique users
     user_list= df['user'].unique().tolist()
@@ -23,10 +21,15 @@ if uploaded_file is not None:
     selected_user = st.sidebar.selectbox("Show analysis wrt",user_list)
 
     num_messages = 0  # default
+    words = 0
+    num_media_messages = 0
+    num_links = 0
+
     if st.sidebar.button("Analyze"):
-        num_messages, words , num_media_messages = helper.fetch_stats(selected_user, df)
+        num_messages, words , num_media_messages , num_links = helper.fetch_stats(selected_user, df)
 
     col1,col2,col3,col4 = st.columns(4)
+    st.title("Top Statistics")
 
     with col1:
         st.header("Total Messages")
@@ -39,3 +42,66 @@ if uploaded_file is not None:
     with col3:
         st.header("Total Media Messages")
         st.title(f"{num_media_messages}")
+
+    with col4:
+        st.header("Total links Messages")
+        st.title(f"{num_links}")
+
+
+    st.title("Monthly Timely")
+    timeline = helper.monthly_timeline(selected_user,df)
+    fig,ax = plt.subplots()
+    ax.plot(timeline['time'],timeline['message'],color= 'green')
+    plt.xticks(rotation='vertical')
+    st.pyplot(fig)
+
+
+
+
+    if selected_user == "Overall":
+        st.header('Most Busy Users')
+        x,new_df= helper.most_busy_users(df)
+
+        # make a larger figure
+        fig, ax = plt.subplots(figsize=(10, 6))  # width=10, height=6 inches
+        ax.bar(x.index, x.values, color='skyblue')
+        plt.xticks(rotation=45, ha='right')
+        ax.set_ylabel("Number of Messages")
+        ax.set_xlabel("User")
+        ax.set_title("Top 5 Most Active Users")
+
+        # show full-width chart
+        st.pyplot(fig)
+
+        with col2:
+            st.dataframe(new_df)
+
+    df_wc = helper.create_wordcloud(selected_user, df)
+    fig,ax = plt.subplots()
+    ax.imshow(df_wc)
+    st.pyplot(fig)
+
+
+    most_common_df = helper.most_common_words(selected_user,df)
+
+    fig,ax = plt.subplots()
+    ax.bar(most_common_df[0],most_common_df[1])
+    plt.xticks(rotation='vertical')
+    st.title("Most Common Words")
+    st.pyplot(fig)
+
+    emoji_df = helper.emoji_helper(selected_user,df)
+    st.dataframe(emoji_df)
+
+    emoji_df = helper.emoji_helper(selected_user,df)
+    st.title("Emoji Analysis")
+
+    col1,col2 = st.columns(2)
+
+    with col1:
+          st.dataframe(emoji_df)
+    with col2:
+     fig, ax = plt.subplots()
+     ax.pie(emoji_df[1].head() ,labels = emoji_df[0].head() ,autopct='%0.2f%%')
+     st.pyplot(fig)
+
